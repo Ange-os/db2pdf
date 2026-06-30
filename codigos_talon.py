@@ -81,40 +81,44 @@ def resolve_codigos_pago(
     nac = nac_param or nac_db or calc.get("nac", "")
     pfs = pfs_param or pfs_db or calc.get("pfs", "")
 
-    cesp_db = db.get("cesp", "") or solo_digitos(fac.get("cesp"))
-    cesp_archivo = cesp_desde_archivo(fac)
-    cesp_calc = cesp_archivo or build_cesp_talon(fac) or calc.get("cesp", "")
-    cesp = cesp_param or cesp_db or cesp_calc
+    # Barra cooperativa (codbarCoop): distinto de facturas.cesp (número CESP del talón).
+    coop_db = db.get("coop", "") or solo_digitos(fac.get("codbarCoop"))
+    coop_archivo = cesp_desde_archivo(fac)
+    coop_calc = coop_archivo or build_cesp_talon(fac) or calc.get("cesp", "")
+    coop_barra = cesp_param or coop_db or coop_calc
 
     suministro = fac.get("suministro")
     link = calc.get("link", "") or (build_link(suministro) if suministro else "")
 
     if cesp_param:
-        cesp_fuente = "param"
-    elif cesp_db and cesp == cesp_db:
-        cesp_fuente = "db"
-    elif cesp_archivo and cesp == cesp_archivo:
-        cesp_fuente = "archivo"
-    elif cesp == build_cesp_talon(fac):
-        cesp_fuente = "calculado"
+        coop_fuente = "param"
+    elif coop_db and coop_barra == coop_db:
+        coop_fuente = "db"
+    elif coop_archivo and coop_barra == coop_archivo:
+        coop_fuente = "archivo"
+    elif coop_barra == build_cesp_talon(fac):
+        coop_fuente = "calculado"
     else:
-        cesp_fuente = _fuente(None, None, calc.get("cesp"))
+        coop_fuente = _fuente(None, None, calc.get("cesp"))
 
     out: dict[str, Any] = {
         "nac": nac,
         "pfs": pfs,
-        "cesp": cesp,
+        "cesp": coop_barra,
+        "coop": coop_barra,
         "link": link,
         "nac_fuente": _fuente(nac_param, nac_db, calc.get("nac")),
         "pfs_fuente": _fuente(pfs_param, pfs_db, calc.get("pfs")),
-        "cesp_fuente": cesp_fuente,
+        "cesp_fuente": coop_fuente,
+        "coop_fuente": coop_fuente,
         "link_fuente": "calculado" if link else "",
-        "cesp_esperado": cesp_calc,
+        "coop_esperado": coop_calc,
+        "cesp_esperado": coop_calc,
     }
-    if cesp_param and cesp_calc and cesp_param != cesp_calc:
-        out["cesp_advertencia"] = (
-            f"CESP del parámetro ({cesp_param}) no coincide con el del comprobante/archivo "
-            f"({cesp_calc}). Usá --cod-cesp {cesp_calc} para igualar el original."
+    if cesp_param and coop_calc and cesp_param != coop_calc:
+        out["coop_advertencia"] = (
+            f"Código cooperativo del parámetro ({cesp_param}) no coincide con el del comprobante/archivo "
+            f"({coop_calc}). Usá --cod-cesp {coop_calc} para igualar el original."
         )
     return out
 

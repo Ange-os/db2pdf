@@ -40,7 +40,7 @@ _CAMPOS_BARRA_DB = (
     ("codbarNac", "nac"),
     ("codbarPF", "pfs"),
     ("codbarPFauto", "pfs"),
-    ("codbarCoop", "cesp"),
+    ("codbarCoop", "coop"),
     # socio_facturas / variantes legacy
     ("cod_bar_nac", "nac"),
     ("codBarNac", "nac"),
@@ -825,6 +825,8 @@ def resumen_codigos_pago(
         out["nac_db"] = desde_db["nac"]
     if desde_db.get("pfs"):
         out["pfs_db"] = desde_db["pfs"]
+    if desde_db.get("coop"):
+        out["coop_db"] = desde_db["coop"]
 
     partes = extraer_partes_impresas(fac)
     out["_prefijo_afip"] = partes["prefijo_afip"]

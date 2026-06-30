@@ -364,8 +364,6 @@ def enriquecer_presentacion(
         cod_cesp=cod_cesp,
     )
     datos["codigos"] = codigos
-    if codigos.get("cesp"):
-        datos["fac"]["cesp"] = codigos["cesp"]
     pf = codigos.get("pfs") or codigos.get("link") or datos["fac"].get("cod_barras_pf", "")
     if pf:
         datos["fac"]["cod_barras_pf"] = pf
