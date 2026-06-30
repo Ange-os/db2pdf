@@ -8,7 +8,6 @@ import importlib.util
 
 _CANDIDATOS = (
     Path(__file__).resolve().parent / "_codigos_pago_impl.py",
-    Path(__file__).resolve().parent.parent / "DB2PDF" / "codigos_pago.py",
 )
 
 _mod = None
