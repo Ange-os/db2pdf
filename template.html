@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Factura {{ socio.suministro }} - {{ fac.periodo }}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+{# ============================== PAGINA 1 ============================== #}
+<div class="hoja">
+
+    {# ── Encabezado ─────────────────────────────────────────── #}
+    <header class="encabezado">
+        <div class="cabecera-coop">
+            <div class="titulo">COOPERATIVA DE PROVISIÓN DE AGUA<br>OBRAS Y SERVICIOS MERLOS LTDA</div>
+            <div>Poeta Agüero 760 (D5881DEP) MERLO- San Luis</div>
+            <div>E-mail: administracion@coopaguamerlo.com.ar</div>
+            <div>C.U.I.T: 30-59626404-9 I.V.A: Responsable Inscripto</div>
+            <div>Ingresos Brutos: 13-30-59626404-9 -</div>
+            <div>Inicio de Actividad: 03/07/1966 - Matricula Nac. 6418</div>
+        </div>
+
+        <div class="cabecera-logo">
+            {% if logo_uri %}
+            <img src="{{ logo_uri }}" alt="logo">
+            {% else %}
+            <img src="static/logo.jpg" alt="logo">
+            {% endif %}
+        </div>
+
+        <div class="cabecera-fac">
+            <div class="titulo-fac">{{ fac.tipo_titulo }} N° {{ fac.suc_com_str }} {{ fac.num_com_str }}</div>
+            <div class="grid-fac">
+                <span class="lbl">Emisión:</span><span class="val">{{ fac.fecha_str }}</span>
+                <span class="lbl">Código Comprobante AFIP:</span><span class="val">{{ fac.cod_afip }}</span>
+                <span class="lbl">Período:</span><span class="val">{{ fac.periodo }}</span>
+                <span class="lbl">Próx. Vto:</span><span class="val">{{ fac.proximo_vto }}</span>
+            </div>
+            <div class="periodo-grande">Período: {{ fac.periodo }}</div>
+            <div class="detalle-cons-titulo">DETALLE DE CONSUMOS DE AGUA POTABLE</div>
+        </div>
+    </header>
+
+    {# ── Socio + Grafico ────────────────────────────────────── #}
+    <section class="socio-grafico">
+        <div class="socio-info">
+            <div class="nombre-socio">{{ socio.nombre }} ( {{ socio.codigo }} )</div>
+            <div>{{ socio.direccion }}</div>
+            <div class="suministro">Suministro: {{ socio.suministro }}</div>
+            <div class="meta">Z:{{ socio.zona }} S:{{ socio.sector }} R:{{ socio.ruta }} &nbsp; {{ socio.tipo_consumidor }}</div>
+            <div class="meta">{% if socio.cuit %}CUIT {{ socio.cuit }} &nbsp; {% endif %}Categoría: {{ socio.categoria }}</div>
+            <div class="meta">Categoría: {{ socio.categoria }}</div>
+            <div class="meta">Ubicación {{ socio.ubicacion }}</div>
+        </div>
+
+        <div class="grafico-consumos">
+            {# Escala dinámica según máximo del histórico (como boleta original) #}
+            {% set escala = grafico_escala or {'y_max': 150, 'ticks': [0, 50, 100, 150]} %}
+            {% set y_max = escala.y_max %}
+            {% set n = consumos_grafico|length %}
+            {% if n > 0 %}
+            {% set ox = 10 %}
+            {% set plot_w = 98 %}
+            {% set plot_h = 28 %}
+            {% set oy_base = 35 %}
+            {% set oy_top = oy_base - plot_h %}
+            {% set slot = plot_w / n %}
+            {% set ancho_barra = slot * 0.68 %}
+            <svg viewBox="0 0 {{ ox + plot_w + 1 }} {{ oy_base + 5.5 }}" preserveAspectRatio="xMinYMin meet">
+                <line x1="{{ ox }}" y1="{{ oy_top }}" x2="{{ ox }}" y2="{{ oy_base }}"
+                      stroke="#000" stroke-width="0.35"/>
+                <line x1="{{ ox }}" y1="{{ oy_base }}" x2="{{ ox + plot_w }}" y2="{{ oy_base }}"
+                      stroke="#000" stroke-width="0.35"/>
+                {% for tick in escala.ticks %}
+                    {% set ty = oy_base - (tick / y_max) * plot_h %}
+                    <line x1="{{ ox - 0.6 }}" y1="{{ ty }}" x2="{{ ox }}" y2="{{ ty }}"
+                          stroke="#000" stroke-width="0.2"/>
+                    <text x="{{ ox - 0.8 }}" y="{{ ty + 0.9 }}" font-size="2.6" text-anchor="end"
+                          fill="#000" font-weight="bold">{{ tick }}</text>
+                {% endfor %}
+                {% for c in consumos_grafico %}
+                    {% set x = ox + loop.index0 * slot + (slot - ancho_barra) / 2 %}
+                    {% set v_plot = c.valor if c.valor > 0 else 0 %}
+                    {% set h = (v_plot / y_max) * plot_h if y_max > 0 else 0 %}
+                    {% set y_bar = oy_base - h %}
+                    <rect x="{{ x }}" y="{{ y_bar }}" width="{{ ancho_barra }}" height="{{ h }}"
+                          fill="#344D6F" />
+                    <text x="{{ x + ancho_barra/2 }}" y="{{ y_bar - 0.7 }}"
+                          font-size="2.9" text-anchor="middle" fill="#000"
+                          font-weight="bold">{{ c.valor|int }}</text>
+                    <text x="{{ x + ancho_barra/2 }}" y="{{ oy_base + 4.2 }}"
+                          font-size="2.7" text-anchor="end" fill="#000"
+                          transform="rotate(-38 {{ x + ancho_barra/2 }} {{ oy_base + 4.2 }})">{{ c.periodo }}</text>
+                {% endfor %}
+            </svg>
+            {% endif %}
+        </div>
+    </section>
+
+    {# ── Detalle servicios medidos ──────────────────────────── #}
+    <table class="tabla-medidos">
+        <thead>
+            <tr><th colspan="9" class="titulo-tabla">DETALLE DE SERVICIOS MEDIDOS FACTURADOS</th></tr>
+            <tr>
+                <th>SERVICIO</th><th>CAT</th><th>MEDIDOR</th>
+                <th colspan="2">LECTURA ANTERIOR</th>
+                <th colspan="2">LECTURA ACTUAL</th>
+                <th>CONSUMO</th><th>DIAS</th><th>PER.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in medidos %}
+            <tr>
+                <td>{{ m.servicio }}</td><td>{{ m.cat }}</td><td>{{ m.medidor }}</td>
+                <td>{{ m.fec_ant }}</td><td>{{ "%.2f"|format(m.est_ant) }}</td>
+                <td>{{ m.fec_act }}</td><td>{{ "%.3f"|format(m.est_act) }}</td>
+                <td>{{ "%.2f"|format(m.consumo) }}</td><td>{{ m.dias }}</td><td>{{ m.periodo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {# ── Comprobante relacionado ────────────────────────────── #}
+    {% if fac.comp_relacionado %}
+    <div class="comp-rel">
+        <span>Comprobante Relacionado: {{ fac.comp_relacionado.descripcion }}</span>
+        <span>{{ "%.2f"|format(fac.comp_relacionado.importe) }}</span>
+    </div>
+    <div class="comp-rel-total">
+        <span>Total</span><span>{{ "%.2f"|format(fac.comp_relacionado.importe) }}</span>
+    </div>
+    {% endif %}
+
+    {# ── Grupos de conceptos ────────────────────────────────── #}
+    {% for grupo in grupos_conceptos %}
+    <table class="grupo-conceptos">
+        <tr><td colspan="5" class="titulo-grupo">{{ grupo.nombre }}</td></tr>
+        {% for it in grupo.lineas %}
+        <tr>
+            <td class="descripcion">{{ it.descripcion }}</td>
+            <td class="cantidad">{{ "%.2f"|format(it.cantidad) if it.cantidad else "" }}</td>
+            <td class="periodo">{{ it.periodo or "" }}</td>
+            <td class="precio">{{ "%.6f"|format(it.precio) if it.precio else "" }}</td>
+            <td class="importe">{{ "%.2f"|format(it.importe) }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="subtotal">
+            <td colspan="4">Total {{ grupo.nombre }}</td>
+            <td>{{ "%.2f"|format(grupo.subtotal) }}</td>
+        </tr>
+    </table>
+    {% endfor %}
+
+    {# ── CESP + vencimiento + total ─────────────────────────── #}
+    <div class="cesp-banda">
+        <span class="cesp-izq">CESP {{ fac.cesp }} &nbsp; VENC.{{ fac.cesp_vto or fac.proximo_vto }}</span>
+        <span class="cesp-total">
+            VENCIMIENTO {{ fac.vencimiento }} &nbsp;&nbsp; Total $ {{ fac.total | money }}
+        </span>
+    </div>
+
+    {# ── Bloque inferior: legales + cajas derechas ──────────── #}
+    <div class="bloque-inferior">
+        <div class="legales">
+            <p>Ud. Tiene derecho a reclamar una indemnización si le facturamos sumas o conceptos indebidos o reclamamos facturas ya abonadas LEY 24240.</p>
+            <p>El importe de IVA discriminado no puede utilizarse como crédito Fiscal</p>
+            <div class="qr-bloque">
+                <img src="static/qr_actualizar.png" alt="QR" class="qr-img">
+                <div class="qr-texto">
+                    ACTUALICE SUS DATOS DE FORMA OBLIGATORIA,<br>
+                    ESCANEANDO EL CÓDIGO QR O ENTRANDO A<br>
+                    LA PÁGINA WEB [https://coopaguamerlo.com.ar]
+                </div>
+            </div>
+        </div>
+
+        <div class="cajas-derecha">
+            <div class="box">
+                <div class="titulo-box">Detalle de Deuda al {{ fac.fecha_str }}</div>
+                <table>
+                    {% if deudas %}
+                    {% for d in deudas %}
+                    <tr>
+                        <td>{{ d.fecha }}</td>
+                        <td><b>{{ d.comprobante }}</b></td>
+                        <td class="deuda-monto">{{ d.importe | money }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if deudas_mas %}
+                    <tr><td colspan="3"><i>Mas {{ deudas_mas }} Comprobantes Adeudados</i></td></tr>
+                    {% endif %}
+                    {% elif deuda_total == 0 %}
+                    <tr><td colspan="3"><i>No se encontraron Comprobantes Adeudados</i></td></tr>
+                    {% endif %}
+                    <tr class="deuda-total">
+                        <td colspan="2">Deuda Total</td>
+                        <td class="deuda-monto">{{ deuda_total | money }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="box">
+                <div class="titulo-box">Régimen de Transparencia al Consumidor - Ley 27.743</div>
+                <table>
+                    <tr><td>IVA del Comprobante</td><td class="deuda-monto">$ {{ fac.iva_total | money }}</td></tr>
+                    <tr><td>Otros Impuestos Nacionales</td><td class="deuda-monto">$ {{ fac.otros_imp | money }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ── Talones (Ente Recaudador + Cooperativa) ────────────── #}
+    <div class="talones">
+        <div class="talon">
+            <div class="talon-vertical-label"><span>Talón Ente Recaudador</span></div>
+            <div class="talon-inner">
+                <div class="talon-header">
+                    {% if logo_uri %}
+                    <img src="{{ logo_uri }}" alt="logo">
+                    {% else %}
+                    <img src="static/logo.jpg" alt="logo">
+                    {% endif %}
+                    <div class="nombre">Cooperativa de Provisión de Agua,<br>Obras y Servicios Merlo Ltda</div>
+                </div>
+                <div class="talon-row"><span>Suministro: <b>{{ socio.suministro }}</b></span>
+                    <span><b>{{ fac.tipo_titulo }} N° {{ fac.suc_com_str }} {{ fac.num_com_str }}</b></span></div>
+                <div class="talon-row"><span>Socio: <b>{{ socio.nombre }} ({{ socio.codigo }})</b></span>
+                    <span>Período <b>{{ fac.periodo }}</b></span></div>
+                <div class="talon-row destacado">
+                    <span>VENCIMIENTO: {{ fac.vencimiento }}</span>
+                    <span>Total: $ {{ fac.total | money }}</span>
+                </div>
+                {% if codigos and codigos.pfs %}
+                <div class="talon-codigo-bloque">
+                    <div class="pago-link">Pago Fácil y Supervielle (Banex)</div>
+                    {% if codigos.pfs_img %}
+                    <img src="{{ codigos.pfs_img }}" class="barcode-img barcode-img-wide"
+                         width="{{ codigos.pfs_w_mm }}mm" height="{{ codigos.pfs_h_mm }}mm" alt="Pago Fácil"/>
+                    {% endif %}
+                    <div class="codigo-num-largo">{{ codigos.pfs }}</div>
+                </div>
+                {% elif fac.cod_barras_pf %}
+                <div class="talon-codigo-bloque">
+                    <div class="pago-link">Pago Fácil y Supervielle (Banex)</div>
+                    <div class="codigo-num-largo">{{ fac.cod_barras_pf }}</div>
+                </div>
+                {% endif %}
+                {% if codigos and codigos.nac %}
+                <div class="talon-codigo-bloque">
+                    <div class="pago-link">Banco Nación</div>
+                    {% if codigos.nac_img %}
+                    <img src="{{ codigos.nac_img }}" class="barcode-img barcode-img-wide"
+                         width="{{ codigos.nac_w_mm }}mm" height="{{ codigos.nac_h_mm }}mm" alt="Banco Nación"/>
+                    {% endif %}
+                    <div class="codigo-num">{{ codigos.nac }}</div>
+                </div>
+                {% endif %}
+                {% if codigos and codigos.link %}
+                <div class="talon-codigo-bloque">
+                    <div class="pago-link">Pagos LINK</div>
+                    <div class="codigo-num">{{ codigos.link }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="talon">
+            <div class="talon-vertical-label"><span>Talón Cooperativa</span></div>
+            <div class="talon-inner">
+                <div class="talon-header">
+                    {% if logo_uri %}
+                    <img src="{{ logo_uri }}" alt="logo">
+                    {% else %}
+                    <img src="static/logo.jpg" alt="logo">
+                    {% endif %}
+                    <div class="nombre">Cooperativa de Provisión de Agua,<br>Obras y Servicios Merlo Ltda</div>
+                </div>
+                <div class="talon-titulo">{{ fac.tipo_titulo }} N° {{ fac.suc_com_str }} {{ fac.num_com_str }}<br>
+                    Período {{ fac.periodo }}</div>
+                <div class="talon-row"><span>Suministro: <b>{{ socio.suministro }}</b></span></div>
+                <div class="talon-row"><span>Socio: <b>{{ socio.nombre }} ({{ socio.codigo }})</b></span></div>
+                <table style="width:100%; border-collapse:collapse; margin-top:1mm; font-size:7.5pt;">
+                    <tr style="background:#e8e8e8;"><th style="border:1px solid #888;">Vto.</th>
+                        <th style="border:1px solid #888;">IMPORTE</th></tr>
+                    <tr><td style="border:1px solid #888; text-align:center;">{{ fac.vencimiento }}</td>
+                        <td style="border:1px solid #888; text-align:center;">{{ fac.total | money }}</td></tr>
+                </table>
+                {% if codigos and codigos.cesp %}
+                <div class="talon-codigo-bloque">
+                    <div class="pago-link">CESP</div>
+                    {% if codigos.cesp_img %}
+                    <img src="{{ codigos.cesp_img }}" class="barcode-img barcode-img-wide"
+                         width="{{ codigos.cesp_w_mm }}mm" height="{{ codigos.cesp_h_mm }}mm" alt="CESP"/>
+                    {% endif %}
+                    <div class="codigo-num">{{ codigos.cesp }}</div>
+                </div>
+                {% elif fac.cesp %}
+                <div class="talon-codigo-bloque">
+                    <div class="pago-link">CESP {{ fac.cesp }}</div>
+                </div>
+                {% endif %}
+                <div class="pago-link talon-coop-label"><b>Cooperativa</b></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ============================== PAGINA 2 ============================== #}
+<div class="hoja">
+    <div class="legal-bloque">
+        <div class="lbl">MEDIOS DE PAGO:</div>
+        <div>Mercado Pago - Pagos 360 - Débito automático - Pago Fácil - Pagos Link - pagomiscuentas.com (Red Banelco)<br><br>
+            Pague esta factura ingresando a www.pagoslink.com.ar o desde el cajero Banelco las 24 horas todos los días del año.<br><br>
+            Pague esta factura ingresando a www.pagomiscuentas.com o desde el cajero Banelco las 24 horas todos los días del año.</div>
+
+        <div class="lbl">TRÁMITES Y CONSULTAS:</div>
+        <div>Dirigirse a la sede de la cooperativa en la calle Poeta Agüero 760 de lunes a viernes de 07:00 a 15:00 hs. o al Tel: 475-001 - 478-080<br><br>
+            Mail: administracion@coopaguamerlo.com.ar<br><br>
+            Web: www.coopaguamerlo.com.ar</div>
+
+        <div class="lbl">PROBLEMAS Y EMERGENCIAS:</div>
+        <div>De lunes a viernes, en el lugar y horarios mencionados. Sábados, domingos y feriados disque el Tel: 475-001,
+            espere unos 15 segundos y se comunicará personalmente con el celular del personal de guardia o al WhatsApp 2656407545.</div>
+
+        <div class="lbl">VIVIENDAS ALQUILADAS:</div>
+        <div>Sr. propietario, exija mensualmente a su inquilino el comprobante debidamente autorizado del pago de la factura
+            por servicio de Agua Potable. No sea sorprendido con una deuda a su nombre.</div>
+
+        <div class="lbl">VENCIMIENTO:</div>
+        <div>Ud. puede pagar la factura hasta la fecha de su vencimiento. Vencido este plazo generará recargo en la próxima emisión.</div>
+
+        <div class="lbl">SUSPENSIÓN DEL SERVICIO:</div>
+        <div>De no registrarse el pago de la presente factura dentro de la fecha de su vencimiento de prestación del servicio,
+            se expone a la suspensión del servicio según el reglamento.<br><br>
+            Los costos de notificación serán a su cargo.</div>
+
+        <div class="lbl">PLANES DE PAGO:</div>
+        <div>Usted puede acceder a un plan de pagos, al cual se le aplicará la tasa de interés vigente del Plazo Fijo del Banco Nación.</div>
+
+        <div class="lbl">RECONEXIÓN:</div>
+        <div>Recuerde que en caso de haber suspendido el servicio por falta de pago, el costo de la reconexión es cien (100) veces
+            el valor del m³ básico más IVA.</div>
+
+        <div class="lbl">MULTAS:</div>
+        <div>Sr. Asociado recuerde que usted NO puede "PROVEER AGUA". La multa en estos casos es de doscientas (200) veces el valor
+            del m³ básico más IVA y costo de reconexión.</div>
+
+        <div class="lbl">Ley 26361</div>
+        <div>(Art. 12) Ud. tiene derecho a reclamar una indemnización si le facturamos sumas, conceptos indebidos o reclamamos
+            el pago de facturas ya abonadas.</div>
+
+        <div class="lbl">EL REGLAMENTO DEL SERVICIO DE AGUA POTABLE</div>
+        <div>Retire su ejemplar en nuestra sede de lunes a viernes de 07:00 hs. a 15:00 hs.</div>
+    </div>
+
+    <div class="tarifa-titulo">TARIFA VIGENTE POR ASAMBLEA DEL {{ tarifa.fecha_asamblea }}</div>
+    <div style="text-align:center; font-size:8pt;">1 m³ = 1.000 LITROS DE AGUA</div>
+
+    <table class="tarifa-tabla">
+        <tr><th>CONSUMOS HASTA</th>
+            {% for r in tarifa.rangos %}<th>{{ r[0] }}</th>{% endfor %}</tr>
+        <tr><td><b>COSTO POR m³</b></td>
+            {% for r in tarifa.rangos %}<td>{{ r[1] }}</td>{% endfor %}</tr>
+    </table>
+
+    <div class="tarifa-cargo-fijo">Cargo Fijo $ {{ "{:,.0f}".format(tarifa.cargo_fijo).replace(",", ".") }}</div>
+    <div style="text-align:center; font-size:8pt; margin-top:1mm;">A estos valores se deben agregar los impuestos que correspondan.</div>
+</div>
+
+</body>
+</html>

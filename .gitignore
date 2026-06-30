@@ -1,0 +1,9 @@
+__pycache__/
+.vscode/
+.env
+.venv/
+.pytest_cache/
+.pytest_cache/
+venv/
+_init_.py
+_preview.html

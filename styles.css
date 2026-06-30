@@ -1,0 +1,425 @@
+/* ============================================================
+   styles.css — Factura CoopAgua Merlo
+   A4 portrait, márgenes 6 mm (como boleta impresa original).
+   ============================================================ */
+
+@page {
+    size: A4 portrait;
+    margin: 6mm;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 7.8pt;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.hoja {
+    width: 100%;
+    max-width: none;
+    min-height: calc(297mm - 12mm);
+    padding: 0;
+    margin: 0;
+    background: #fff;
+    page-break-after: always;
+}
+.hoja:last-child { page-break-after: auto; }
+
+/* ── Encabezado ─────────────────────────────────────────── */
+.encabezado {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 5mm;
+    align-items: start;
+}
+
+.cabecera-coop {
+    font-size: 7.5pt;
+    line-height: 1.25;
+}
+.cabecera-coop .titulo {
+    font-weight: bold;
+    font-size: 9pt;
+    text-align: center;
+    margin-bottom: 1mm;
+}
+.cabecera-coop .nombre {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 1mm;
+}
+
+.cabecera-logo {
+    text-align: center;
+}
+.cabecera-logo img {
+    max-width: 94px;
+    max-height: 94px;
+}
+
+.cabecera-fac {
+    text-align: right;
+    font-size: 8pt;
+}
+.cabecera-fac .titulo-fac {
+    font-weight: bold;
+    font-size: 11pt;
+    margin-bottom: 1mm;
+}
+.cabecera-fac .grid-fac {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 1mm 3mm;
+    justify-content: end;
+    font-size: 7.5pt;
+}
+.cabecera-fac .grid-fac .lbl { text-align: left; color: #555; }
+.cabecera-fac .grid-fac .val { text-align: right; font-weight: bold; }
+.cabecera-fac .periodo-grande {
+    font-size: 13pt;
+    font-weight: bold;
+    margin-top: 1mm;
+}
+
+.detalle-cons-titulo {
+    padding-left: 65px;
+    text-align: left;
+    font-size: 6.5pt;
+}
+
+/* ── Bloque socio + grafico ─────────────────────────────── */
+.socio-grafico {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5mm;
+    margin-bottom: 0;
+    align-items: start;
+}
+.socio-info { font-size: 8.5pt; line-height: 1.35; }
+.socio-info .nombre-socio { font-weight: bold; font-size: 9pt; }
+.socio-info .suministro { font-weight: bold; margin: 1mm 0; }
+.socio-info .meta { color: #333; font-size: 7.5pt; font-weight: bold;}
+
+.grafico-consumos {
+    border: none;
+    padding: 0;
+    margin: 0;
+    height: 30mm;
+    width: 66mm;
+    margin-left: auto;
+    justify-self: end;
+    line-height: 0;
+    overflow: hidden;
+}
+.grafico-consumos svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+}
+
+/* ── Tabla detalle servicios medidos ────────────────────── */
+.tabla-medidos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0;
+    margin-bottom: 1mm;
+    font-size: 7.5pt;
+}
+.tabla-medidos thead th {
+    background: #e8e8e8;
+    border: 1px solid #999;
+    padding: 1mm 2mm;
+    font-weight: bold;
+    text-align: center;
+}
+.tabla-medidos .titulo-tabla {
+    background: #d8d8d8;
+    text-align: start;
+    font-weight: bold;
+    font-size: 7.5pt;
+    padding: 0.8mm;
+}
+.tabla-medidos tbody td {
+    border: 1px solid #ccc;
+    padding: 1mm 2mm;
+    text-align: center;
+}
+.tabla-medidos tbody td:nth-child(3) { min-width: 11mm; }  /* medidor */
+.tabla-medidos tbody td:nth-child(8) { min-width: 9mm; }   /* consumo */
+.tabla-medidos tbody td:nth-child(9) { min-width: 7mm; }   /* días */
+.tabla-medidos tbody td:nth-child(10) { min-width: 11mm; } /* período */
+
+/* ── Comprobante relacionado + Total ────────────────────── */
+.comp-rel {
+    display: flex;
+    justify-content: space-between;
+    padding: 1mm 2mm;
+    border-bottom: 1px solid #ccc;
+    font-size: 8pt;
+}
+.comp-rel-total {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4mm;
+    padding: 0.5mm 2mm;
+    font-weight: bold;
+    border-bottom: 1px solid #999;
+    margin-bottom: 1mm;
+}
+
+/* ── Grupos de conceptos ────────────────────────────────── */
+.grupo-conceptos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0.8mm;
+    font-size: 6pt;
+    table-layout: fixed;
+}
+.grupo-conceptos .titulo-grupo {
+    background: #cfcfcf;
+    text-align: center;
+    font-weight: bold;
+    padding: 0.5mm;
+    letter-spacing: 0.3px;
+}
+.grupo-conceptos td {
+    padding: 0.4mm 2mm;
+}
+.grupo-conceptos td.descripcion { width: 42%; padding-right: 3mm; }
+.grupo-conceptos td.cantidad   { width: 14%; text-align: right; padding-left: 1.5mm; padding-right: 1.5mm; }
+.grupo-conceptos td.periodo    { width: 14%; text-align: center; padding-left: 1mm; padding-right: 1mm; }
+.grupo-conceptos td.precio     { width: 16%; text-align: right; padding-left: 1.5mm; padding-right: 1.5mm; }
+.grupo-conceptos td.importe    { width: 14%; text-align: right; padding-left: 1.5mm; padding-right: 2mm; }
+.grupo-conceptos .subtotal td {
+    border-top: 1px solid #999;
+    font-weight: bold;
+    text-align: right;
+    padding-top: 1mm;
+}
+
+/* ── Banda CESP + total ─────────────────────────────────── */
+.cesp-banda {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 3mm;
+    background: #e8e8e8;
+    padding: 1mm 2.5mm;
+    margin: 1mm 0;
+    border: 1px solid #bbb;
+}
+.cesp-banda .cesp-izq {
+    font-size: 8pt;
+    font-weight: normal;
+    white-space: nowrap;
+}
+.cesp-banda .cesp-total {
+    font-size: 10.5pt;
+    font-weight: bold;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ── Bloque inferior: legal + deuda + qr ────────────────── */
+.bloque-inferior {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 4mm;
+    margin: 1mm 0;
+}
+.legales {
+    font-size: 7.5pt;
+    line-height: 1.3;
+}
+.legales .destacado { font-weight: bold; }
+.legales .qr-bloque {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    text-align: center;
+    margin-top: 3mm;
+    gap: 2mm;
+}
+.legales .qr-bloque .qr-img {
+    width: 24mm;
+    height: 24mm;
+    display: block;
+}
+.legales .qr-texto {
+    font-size: 7pt;
+    font-weight: bold;
+    line-height: 1.25;
+    max-width: 90mm;
+}
+
+.cajas-derecha {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5mm;
+}
+.box {
+    border: 1px solid #888;
+    padding: 1mm 2mm;
+    font-size: 7.5pt;
+}
+.box .titulo-box {
+    background: #e8e8e8;
+    text-align: center;
+    font-weight: bold;
+    padding: 0.8mm;
+    margin: -1mm -2mm 1mm -2mm;
+    border-bottom: 1px solid #888;
+}
+.box table { width: 100%; border-collapse: collapse; }
+.box table td { padding: 0.5mm 0; font-size: 7.5pt; }
+.box .deuda-monto { text-align: right; font-weight: bold; }
+.box .deuda-total {
+    border-top: 1px solid #999;
+    font-weight: bold;
+    padding-top: 1mm;
+}
+
+/* ── Talones ────────────────────────────────────────────── */
+.talones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+.talon {
+    border: 1px solid #888;
+    padding: 1.5mm;
+    font-size: 7.5pt;
+    position: relative;
+}
+.talon .talon-header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #aaa;
+}
+.talon .talon-header img { width: 12mm; }
+.talon .talon-header .nombre {
+    font-weight: bold;
+    font-size: 8pt;
+    line-height: 1.1;
+}
+.talon .talon-titulo {
+    text-align: right;
+    font-weight: bold;
+    font-size: 9pt;
+    margin-bottom: 1mm;
+}
+.talon .talon-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5mm 0;
+}
+.talon .talon-row.destacado {
+    font-weight: bold;
+    font-size: 9pt;
+    border-top: 1px solid #888;
+    padding-top: 1mm;
+    margin-top: 1mm;
+}
+.talon .barcode-img {
+    display: block;
+    margin: 1mm auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+.talon .barcode-img-wide {
+    width: 100%;
+    height: auto;
+}
+.talon .codigo-num {
+    font-size: 6pt;
+    letter-spacing: 0;
+    word-break: normal;
+    white-space: nowrap;
+    margin: 1.5mm 0 0;
+    line-height: 1.2;
+    text-align: center;
+}
+.talon .codigo-num-largo {
+    font-size: 5.5pt;
+    letter-spacing: 0;
+    white-space: normal;
+    margin: 1.5mm 0 0;
+    line-height: 1.15;
+    text-align: center;
+}
+.talon .pago-link { font-size: 7.5pt; text-align: center; margin-top: 0; }
+.talon-codigo-bloque {
+    text-align: center;
+    border-top: 1px solid #ddd;
+}
+.talon-codigo-bloque:first-of-type {
+    border-top: none;
+
+    padding-top: 0;
+}
+.talon-coop-label {
+    margin-top: 2mm;
+}
+.talon-vertical-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: -170px;
+    width: 4mm;
+    font-size: 6.5pt;
+    font-weight: bold;
+    color: #555;
+    text-align: center;
+    /* Texto vertical: rotamos un span hijo, no el contenedor */
+}
+.talon-vertical-label span {
+    display: inline-block;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    white-space: nowrap;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+}
+.talon-inner { padding-left: 2mm; }
+
+/* ── Pagina 2: texto legal + tarifa ─────────────────────── */
+.legal-bloque {
+    display: grid;
+    grid-template-columns: 30mm 1fr;
+    gap: 2mm 4mm;
+    font-size: 8pt;
+    line-height: 1.35;
+    margin-bottom: 4mm;
+}
+.legal-bloque .lbl { font-weight: bold; }
+
+.tarifa-titulo {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 4mm;
+}
+.tarifa-tabla {
+    margin: 2mm auto;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+.tarifa-tabla th, .tarifa-tabla td {
+    border: 1px solid #888;
+    padding: 1mm 2mm;
+    text-align: center;
+    min-width: 18mm;
+}
+.tarifa-tabla th { background: #e8e8e8; }
+.tarifa-cargo-fijo { text-align: center; font-size: 9pt; }
