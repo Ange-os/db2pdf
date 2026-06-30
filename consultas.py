@@ -16,7 +16,7 @@ from datetime import date, datetime
 from typing import Any
 
 import config
-from db import FacturaNotFoundError, _sanitize_identifier, fetch_factura, get_connection
+from db import FacturaNotFoundError, _sanitize_identifier, fetch_factura, fetch_factura_by_id, get_connection
 from tarifa_actual import CARGO_FIJO, FECHA_ASAMBLEA, RANGOS_M3
 
 
@@ -214,6 +214,7 @@ def _armar_datos(fac_row: dict[str, Any], cur: Any, id_fac: int) -> dict[str, An
         "direccion": fac_row.get("direccion_postal") or "",
         "suministro": fac_row.get("suministro") or "",
         "zona": fac_row.get("zona") or "",
+        "cuit": fac_row.get("cuit_cliente") or "",
         "sector": fac_row.get("sector") or "",
         "ruta": fac_row.get("ruta") or "",
         "tipo_consumidor": (fac_row.get("condicion_iva") or "").upper() or "CONSUMIDOR FINAL",
@@ -378,9 +379,10 @@ def cargar_datos_suministro(
 
 
 def cargar_datos_completos(
-    suministro: str,
+    suministro: str | None = None,
     periodo: str | None = None,
     *,
+    id_fac: int | None = None,
     cod_nac: str | None = None,
     cod_pfs: str | None = None,
     cod_cesp: str | None = None,
@@ -388,7 +390,16 @@ def cargar_datos_completos(
     """Pipeline completo: consultas ERP + normalización + logo/códigos/gráfico."""
     from mapear_factura import enriquecer_presentacion
 
-    datos, fac_row = cargar_datos_suministro(suministro, periodo)
+    if id_fac is not None:
+        fac_row = None
+        if suministro:
+            fac_row = fetch_factura_by_id(int(id_fac), suministro=suministro)
+        datos, fac_row = cargar_datos(int(id_fac), fac_row=fac_row)
+    elif suministro:
+        datos, fac_row = cargar_datos_suministro(suministro, periodo)
+    else:
+        raise ValueError("Indicá suministro o id_fac")
+
     datos = normalizar_para_template(datos)
     return enriquecer_presentacion(
         datos,

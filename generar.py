@@ -23,17 +23,16 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from formato_num import fmt_money, fmt_num
+
 HERE = Path(__file__).parent
 
 
-def _fmt_money(value) -> str:
-    if value is None or value == "":
-        return "0,00"
-    try:
-        n = float(value)
-    except (TypeError, ValueError):
-        return str(value)
-    return f"{n:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+def _num_filter(decimals: int):
+    def _filter(value):
+        return fmt_num(value, decimals)
+    _filter.__name__ = f"num{decimals}"
+    return _filter
 
 
 def render_html(datos: dict) -> str:
@@ -41,7 +40,11 @@ def render_html(datos: dict) -> str:
         loader=FileSystemLoader(str(HERE)),
         autoescape=select_autoescape(['html']),
     )
-    env.filters["money"] = _fmt_money
+    env.filters["money"] = fmt_money
+    env.filters["num0"] = _num_filter(0)
+    env.filters["num2"] = _num_filter(2)
+    env.filters["num3"] = _num_filter(3)
+    env.filters["num6"] = _num_filter(6)
     tmpl = env.get_template("template.html")
     return tmpl.render(**datos)
 
@@ -89,6 +92,7 @@ def cargar_datos(
     muestra: bool = False,
     suministro: str | None = None,
     periodo: str | None = None,
+    id_fac: int | None = None,
     cod_nac: str | None = None,
     cod_pfs: str | None = None,
     cod_cesp: str | None = None,
@@ -103,12 +107,13 @@ def cargar_datos(
             cod_pfs=cod_pfs,
             cod_cesp=cod_cesp,
         )
-    if not suministro:
-        raise ValueError("Indicá --suministro o --muestra")
+    if id_fac is None and not suministro:
+        raise ValueError("Indicá --suministro, --id-fac o --muestra")
     from consultas import cargar_datos_completos
     return cargar_datos_completos(
         suministro,
         periodo,
+        id_fac=id_fac,
         cod_nac=cod_nac,
         cod_pfs=cod_pfs,
         cod_cesp=cod_cesp,
@@ -116,18 +121,20 @@ def cargar_datos(
 
 
 def generar_pdf_suministro(
-    suministro: str,
+    suministro: str | None = None,
     periodo: str | None = None,
     output_path: Path | str | None = None,
     *,
+    id_fac: int | None = None,
     cod_nac: str | None = None,
     cod_pfs: str | None = None,
     cod_cesp: str | None = None,
 ) -> bytes:
-    """Genera PDF desde MariaDB por suministro y período opcional."""
+    """Genera PDF desde MariaDB por suministro/período o por id_fac."""
     datos = cargar_datos(
         suministro=suministro,
         periodo=periodo,
+        id_fac=id_fac,
         cod_nac=cod_nac,
         cod_pfs=cod_pfs,
         cod_cesp=cod_cesp,
@@ -136,9 +143,12 @@ def generar_pdf_suministro(
     return render_pdf(html, Path(output_path) if output_path else None)
 
 
-def _default_pdf_name(datos: dict) -> str:
+def _default_pdf_name(datos: dict, *, id_fac: int | None = None) -> str:
     socio = datos.get("socio") or {}
     fac = datos.get("fac") or {}
+    if id_fac is not None:
+        sumi = socio.get("suministro") or "factura"
+        return f"factura_{sumi}_id{id_fac}.pdf"
     sumi = socio.get("suministro") or "factura"
     per = fac.get("periodo") or "ultima"
     return f"factura_{sumi}_{per.replace('/', '-')}.pdf"
@@ -152,6 +162,7 @@ def main():
             "Ejemplos:\n"
             "  python generar.py --muestra --pdf prueba.pdf\n"
             "  python generar.py --suministro 346201 --periodo 04/2026 --pdf out.pdf\n"
+            "  python generar.py --id-fac 2029259 --pdf out.pdf\n"
             "  python generar.py 346201 04/2026 --pdf out.pdf"
         ),
     )
@@ -165,6 +176,7 @@ def main():
                     help="Usa datos hardcodeados (factura Moyano 04/2026)")
     ap.add_argument("--suministro", "-s", help="Número de suministro (MariaDB)")
     ap.add_argument("--periodo", "-p", help="Período MM/YYYY (opcional)")
+    ap.add_argument("--id-fac", type=int, default=None, help="id_fac ERP (comprobante exacto)")
     ap.add_argument("--pdf", help="Generar PDF en esta ruta (requiere playwright)")
     ap.add_argument("--abrir", action="store_true",
                     help="Abre el HTML preview en el browser por defecto")
@@ -181,9 +193,9 @@ def main():
         if len(args.posicional) > 1 and not periodo:
             periodo = args.posicional[1]
 
-    if not args.muestra and not suministro:
+    if not args.muestra and not suministro and args.id_fac is None:
         ap.print_help()
-        print("\nIndicá --muestra o --suministro (ej: generar.py 346201 04/2026)")
+        print("\nIndicá --muestra, --suministro o --id-fac")
         sys.exit(0)
 
     try:
@@ -191,6 +203,7 @@ def main():
             muestra=args.muestra,
             suministro=suministro,
             periodo=periodo,
+            id_fac=args.id_fac,
             cod_nac=args.cod_nac,
             cod_pfs=args.cod_pfs,
             cod_cesp=args.cod_cesp,
@@ -221,8 +234,8 @@ def main():
         out = Path(args.pdf).resolve()
         render_pdf(html, out)
         print(f"PDF generado: {out}")
-    elif not args.muestra and suministro:
-        out = HERE / _default_pdf_name(datos)
+    elif not args.muestra and (suministro or args.id_fac is not None):
+        out = HERE / _default_pdf_name(datos, id_fac=args.id_fac)
         render_pdf(html, out)
         print(f"PDF generado: {out}")
 

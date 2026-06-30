@@ -34,7 +34,7 @@ html, body {
 /* ── Encabezado ─────────────────────────────────────────── */
 .encabezado {
     display: grid;
-    grid-template-columns: 1fr 80px 1fr;
+    grid-template-columns: 1fr 0.8fr 1fr;
     gap: 5mm;
     align-items: start;
 }
@@ -59,8 +59,8 @@ html, body {
     text-align: center;
 }
 .cabecera-logo img {
-    max-width: 94px;
-    max-height: 94px;
+    width: 50%;
+    height: 90px;
 }
 
 .cabecera-fac {
@@ -302,11 +302,12 @@ html, body {
     position: relative;
 }
 .talon .talon-header {
+    gap: 8mm;
     display: flex;
     align-items: center;
     border-bottom: 1px solid #aaa;
 }
-.talon .talon-header img { width: 12mm; }
+.talon .talon-header img { width: 11mm; height: 10mm;}
 .talon .talon-header .nombre {
     font-weight: bold;
     font-size: 8pt;

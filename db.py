@@ -56,13 +56,41 @@ def _where_suministro_sql() -> str:
     return "TRIM(suministro) = TRIM(CAST(CAST(%s AS UNSIGNED) AS CHAR))"
 
 
+def fetch_factura_by_id(
+    id_fac: int,
+    suministro: str | None = None,
+) -> dict[str, Any]:
+    """Devuelve la fila de facturas por id_fac (sin filtro de saldo)."""
+    tbl = _sanitize_identifier(config.TABLE_FACTURAS)
+    sql = f"SELECT * FROM `{tbl}` WHERE id_fac = %s"
+    params: list[Any] = [int(id_fac)]
+    if suministro:
+        sql += f" AND {_where_suministro_sql()}"
+        params.append(_normalize_suministro(suministro))
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+            factura = cur.fetchone()
+
+    if not factura:
+        msg = f"No hay factura para id_fac={id_fac}"
+        if suministro:
+            msg += f", suministro={_normalize_suministro(suministro)}"
+        raise FacturaNotFoundError(msg)
+    return factura
+
+
 def fetch_factura(
     suministro: str,
     periodo: str | None = None,
 ) -> dict[str, Any]:
     """
     Devuelve la fila de facturas (TABLE_FACTURAS).
-    Si periodo es None, trae la más reciente por fecha_procesado.
+
+    Sin id_fac explícito: entre comprobantes con saldo > 0, elige el de mayor
+    fecha_emision; desempate por id_fac DESC. Si periodo es None, aplica sobre
+    todos los períodos del suministro.
     """
     suministro_norm = _normalize_suministro(suministro)
     tbl = _sanitize_identifier(config.TABLE_FACTURAS)
@@ -71,6 +99,7 @@ def fetch_factura(
         SELECT *
         FROM `{tbl}`
         WHERE {_where_suministro_sql()}
+          AND saldo > 0
     """
     params: list[Any] = [suministro_norm]
 
@@ -78,7 +107,7 @@ def fetch_factura(
         sql += " AND periodo = %s"
         params.append(periodo.strip())
 
-    sql += " ORDER BY fecha_procesado DESC LIMIT 1"
+    sql += " ORDER BY fecha_emision DESC, id_fac DESC LIMIT 1"
 
     with get_connection() as conn:
         with conn.cursor() as cur:

@@ -7,6 +7,7 @@ Prueba local (desde la raíz del proyecto):
 
     curl http://127.0.0.1:8000/health
     curl -H "X-API-Key: TU_CLAVE" "http://127.0.0.1:8000/v1/factura/pdf?suministro=346201" -o prueba.pdf
+    curl -H "X-API-Key: TU_CLAVE" "http://127.0.0.1:8000/v1/factura/pdf?id_fac=2029259" -o nc.pdf
 """
 from __future__ import annotations
 
@@ -23,9 +24,17 @@ from generar import generar_pdf_suministro
 app = FastAPI(title="db2pdf API", version="0.1.0")
 
 
-def _pdf_filename(suministro: str, periodo: str | None) -> str:
+def _pdf_filename(
+    suministro: str | None,
+    periodo: str | None,
+    id_fac: int | None = None,
+) -> str:
+    if id_fac is not None:
+        s = re.sub(r"\D", "", suministro or "") or "factura"
+        return f"factura_{s}_id{id_fac}.pdf"
     per = periodo.strip().replace("/", "-") if periodo else "ultima"
-    return f"factura_{suministro}_{per}.pdf"
+    digits = re.sub(r"\D", "", suministro or "") or "factura"
+    return f"factura_{digits}_{per}.pdf"
 
 
 def _validate_periodo(periodo: str | None) -> str | None:
@@ -72,15 +81,33 @@ def health() -> JSONResponse:
 
 @app.get("/v1/factura/pdf", dependencies=[Depends(verify_api_key)])
 def factura_pdf(
-    suministro: Annotated[str, Query(min_length=1, description="Número de suministro")],
+    suministro: Annotated[
+        str | None,
+        Query(min_length=1, description="Número de suministro (requerido salvo id_fac)"),
+    ] = None,
     periodo: Annotated[
         str | None,
-        Query(description="Período MM/YYYY (opcional; sin él, la más reciente)"),
+        Query(
+            description=(
+                "Período MM/YYYY (opcional). Sin id_fac: elige comprobante con saldo > 0 "
+                "y mayor fecha_emision del suministro."
+            ),
+        ),
+    ] = None,
+    id_fac: Annotated[
+        int | None,
+        Query(description="id_fac ERP — comprobante exacto (NC, refactura, saldo ≤ 0)"),
     ] = None,
 ) -> Response:
+    if id_fac is None and not suministro:
+        raise HTTPException(status_code=400, detail="Indicá suministro o id_fac")
     periodo_norm = _validate_periodo(periodo)
     try:
-        pdf_bytes = generar_pdf_suministro(suministro, periodo_norm)
+        pdf_bytes = generar_pdf_suministro(
+            suministro=suministro,
+            periodo=periodo_norm,
+            id_fac=id_fac,
+        )
     except FacturaNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -93,8 +120,7 @@ def factura_pdf(
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Error al generar PDF") from exc
 
-    digits = re.sub(r"\D", "", suministro) or suministro.strip()
-    filename = _pdf_filename(digits, periodo_norm)
+    filename = _pdf_filename(suministro, periodo_norm, id_fac=id_fac)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
