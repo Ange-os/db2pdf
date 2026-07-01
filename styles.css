@@ -286,7 +286,6 @@ html, body {
 
 /* ── Talones ────────────────────────────────────────────── */
 .talones {
-    margin-top: -0.5em;
     display: grid;
     grid-template-columns: 1fr 1fr;
     page-break-inside: avoid;
