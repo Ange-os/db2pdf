@@ -99,7 +99,7 @@ def fetch_factura(
         SELECT *
         FROM `{tbl}`
         WHERE {_where_suministro_sql()}
-          AND saldo > 0
+          AND total > 0
     """
     params: list[Any] = [suministro_norm]
 
