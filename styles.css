@@ -132,7 +132,6 @@ html, body {
     width: 100%;
     border-collapse: collapse;
     margin-top: 0;
-    margin-bottom: 1mm;
     font-size: 7.5pt;
 }
 .tabla-medidos thead th {
@@ -181,7 +180,6 @@ html, body {
 .grupo-conceptos {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 0.8mm;
     font-size: 6pt;
     table-layout: fixed;
 }
@@ -215,7 +213,6 @@ html, body {
     gap: 3mm;
     background: #e8e8e8;
     padding: 1mm 2.5mm;
-    margin: 1mm 0;
     border: 1px solid #bbb;
 }
 .cesp-banda .cesp-izq {
@@ -235,7 +232,6 @@ html, body {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
     gap: 4mm;
-    margin: 1mm 0;
 }
 .legales {
     font-size: 7.5pt;
@@ -247,12 +243,11 @@ html, body {
     flex-direction: row-reverse;
     align-items: center;
     text-align: center;
-    margin-top: 3mm;
     gap: 2mm;
 }
 .legales .qr-bloque .qr-img {
-    width: 24mm;
-    height: 24mm;
+    width: 23mm;
+    height: 23mm;
     display: block;
 }
 .legales .qr-texto {
@@ -291,6 +286,7 @@ html, body {
 
 /* ── Talones ────────────────────────────────────────────── */
 .talones {
+    margin-top: -0.5em;
     display: grid;
     grid-template-columns: 1fr 1fr;
     page-break-inside: avoid;
@@ -308,7 +304,7 @@ html, body {
     align-items: center;
     border-bottom: 1px solid #aaa;
 }
-.talon .talon-header img { width: 11mm; height: 10mm;}
+.talon .talon-header img { width: 10mm; height: 9mm;}
 .talon .talon-header .nombre {
     font-weight: bold;
     font-size: 8pt;
