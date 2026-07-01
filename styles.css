@@ -34,7 +34,7 @@ html, body {
 /* ── Encabezado ─────────────────────────────────────────── */
 .encabezado {
     display: grid;
-    grid-template-columns: 1.5fr 0.5fr 1fr;
+    grid-template-columns: 1fr 0.5fr 1fr;
     gap: 5mm;
     align-items: start;
 }
@@ -56,11 +56,12 @@ html, body {
 }
 
 .cabecera-logo {
+    margin: 3em 0 0 4em;
     text-align: center;
 }
 .cabecera-logo img {
-    width: 60%;
-    height: 72px;
+    width: 70%;
+    height: 68px;
 }
 
 .cabecera-fac {
