@@ -143,14 +143,15 @@ def generar_pdf_suministro(
     return render_pdf(html, Path(output_path) if output_path else None)
 
 
-def _default_pdf_name(datos: dict, *, id_fac: int | None = None) -> str:
+def pdf_filename_from_datos(datos: dict, *, id_fac: int | None = None) -> str:
+    """Nombre de archivo: suministro + período real del comprobante (fac.periodo)."""
     socio = datos.get("socio") or {}
     fac = datos.get("fac") or {}
     if id_fac is not None:
         sumi = socio.get("suministro") or "factura"
         return f"factura_{sumi}_id{id_fac}.pdf"
     sumi = socio.get("suministro") or "factura"
-    per = fac.get("periodo") or "ultima"
+    per = fac.get("periodo") or "sin-periodo"
     return f"factura_{sumi}_{per.replace('/', '-')}.pdf"
 
 
@@ -235,7 +236,7 @@ def main():
         render_pdf(html, out)
         print(f"PDF generado: {out}")
     elif not args.muestra and (suministro or args.id_fac is not None):
-        out = HERE / _default_pdf_name(datos, id_fac=args.id_fac)
+        out = HERE / pdf_filename_from_datos(datos, id_fac=args.id_fac)
         render_pdf(html, out)
         print(f"PDF generado: {out}")
 

@@ -19,22 +19,9 @@ from fastapi.responses import JSONResponse, Response
 
 import config
 from db import FacturaNotFoundError, test_connection
-from generar import generar_pdf_suministro
+from generar import cargar_datos, pdf_filename_from_datos, render_html, render_pdf
 
 app = FastAPI(title="db2pdf API", version="0.1.0")
-
-
-def _pdf_filename(
-    suministro: str | None,
-    periodo: str | None,
-    id_fac: int | None = None,
-) -> str:
-    if id_fac is not None:
-        s = re.sub(r"\D", "", suministro or "") or "factura"
-        return f"factura_{s}_id{id_fac}.pdf"
-    per = periodo.strip().replace("/", "-") if periodo else "ultima"
-    digits = re.sub(r"\D", "", suministro or "") or "factura"
-    return f"factura_{digits}_{per}.pdf"
 
 
 def _validate_periodo(periodo: str | None) -> str | None:
@@ -103,11 +90,12 @@ def factura_pdf(
         raise HTTPException(status_code=400, detail="Indicá suministro o id_fac")
     periodo_norm = _validate_periodo(periodo)
     try:
-        pdf_bytes = generar_pdf_suministro(
+        datos = cargar_datos(
             suministro=suministro,
             periodo=periodo_norm,
             id_fac=id_fac,
         )
+        pdf_bytes = render_pdf(render_html(datos))
     except FacturaNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -120,7 +108,7 @@ def factura_pdf(
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Error al generar PDF") from exc
 
-    filename = _pdf_filename(suministro, periodo_norm, id_fac=id_fac)
+    filename = pdf_filename_from_datos(datos, id_fac=id_fac)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
