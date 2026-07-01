@@ -49,7 +49,7 @@
             <div>{{ socio.direccion }}</div>
             <div class="suministro">Suministro: {{ socio.suministro }}</div>
             <div class="meta">Z:{{ socio.zona }} S:{{ socio.sector }} R:{{ socio.ruta }} &nbsp; {{ socio.tipo_consumidor }}</div>
-            <div class="meta">{% if socio.cuit %}CUIT {{ socio.cuit }} &nbsp; {% endif %}Categoría: {{ socio.categoria }}</div>
+            <div class="meta">{% if socio.cuit %}CUIT {{ socio.cuit }} &nbsp; {% endif %}</div>
             <div class="meta">Categoría: {{ socio.categoria }}</div>
             <div class="meta">Ubicación {{ socio.ubicacion }}</div>
         </div>
@@ -113,9 +113,9 @@
             {% for m in medidos %}
             <tr>
                 <td>{{ m.servicio }}</td><td>{{ m.cat }}</td><td>{{ m.medidor }}</td>
-                <td>{{ m.fec_ant }}</td><td>{{ "%.2f"|format(m.est_ant) }}</td>
-                <td>{{ m.fec_act }}</td><td>{{ "%.3f"|format(m.est_act) }}</td>
-                <td>{{ "%.2f"|format(m.consumo) }}</td><td>{{ m.dias }}</td><td>{{ m.periodo }}</td>
+                <td>{{ m.fec_ant }}</td><td>{{ m.est_ant | num2 }}</td>
+                <td>{{ m.fec_act }}</td><td>{{ m.est_act | num3 }}</td>
+                <td>{{ m.consumo | num2 }}</td><td>{{ m.dias }}</td><td>{{ m.periodo }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -125,10 +125,10 @@
     {% if fac.comp_relacionado %}
     <div class="comp-rel">
         <span>Comprobante Relacionado: {{ fac.comp_relacionado.descripcion }}</span>
-        <span>{{ "%.2f"|format(fac.comp_relacionado.importe) }}</span>
+        <span>{{ fac.comp_relacionado.importe | num2 }}</span>
     </div>
     <div class="comp-rel-total">
-        <span>Total</span><span>{{ "%.2f"|format(fac.comp_relacionado.importe) }}</span>
+        <span>Total</span><span>{{ fac.comp_relacionado.importe | num2 }}</span>
     </div>
     {% endif %}
 
@@ -139,15 +139,15 @@
         {% for it in grupo.lineas %}
         <tr>
             <td class="descripcion">{{ it.descripcion }}</td>
-            <td class="cantidad">{{ "%.2f"|format(it.cantidad) if it.cantidad else "" }}</td>
+            <td class="cantidad">{{ it.cantidad | num2 if it.cantidad else "" }}</td>
             <td class="periodo">{{ it.periodo or "" }}</td>
-            <td class="precio">{{ "%.6f"|format(it.precio) if it.precio else "" }}</td>
-            <td class="importe">{{ "%.2f"|format(it.importe) }}</td>
+            <td class="precio">{{ it.precio | num6 if it.precio else "" }}</td>
+            <td class="importe">{{ it.importe | num2 }}</td>
         </tr>
         {% endfor %}
         <tr class="subtotal">
             <td colspan="4">Total {{ grupo.nombre }}</td>
-            <td>{{ "%.2f"|format(grupo.subtotal) }}</td>
+            <td>{{ grupo.subtotal | num2 }}</td>
         </tr>
     </table>
     {% endfor %}
@@ -361,10 +361,10 @@
         <tr><th>CONSUMOS HASTA</th>
             {% for r in tarifa.rangos %}<th>{{ r[0] }}</th>{% endfor %}</tr>
         <tr><td><b>COSTO POR m³</b></td>
-            {% for r in tarifa.rangos %}<td>{{ r[1] }}</td>{% endfor %}</tr>
+            {% for r in tarifa.rangos %}<td>{{ r[1] | num0 }}</td>{% endfor %}</tr>
     </table>
 
-    <div class="tarifa-cargo-fijo">Cargo Fijo $ {{ "{:,.0f}".format(tarifa.cargo_fijo).replace(",", ".") }}</div>
+    <div class="tarifa-cargo-fijo">Cargo Fijo $ {{ tarifa.cargo_fijo | num0 }}</div>
     <div style="text-align:center; font-size:8pt; margin-top:1mm;">A estos valores se deben agregar los impuestos que correspondan.</div>
 </div>
 
