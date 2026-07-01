@@ -144,15 +144,12 @@ def generar_pdf_suministro(
 
 
 def pdf_filename_from_datos(datos: dict, *, id_fac: int | None = None) -> str:
-    """Nombre de archivo: suministro + período real del comprobante (fac.periodo)."""
+    """Nombre de archivo: CoopAgua-Factura-{suministro}-{periodo}."""
     socio = datos.get("socio") or {}
     fac = datos.get("fac") or {}
-    if id_fac is not None:
-        sumi = socio.get("suministro") or "factura"
-        return f"factura_{sumi}_id{id_fac}.pdf"
-    sumi = socio.get("suministro") or "factura"
-    per = fac.get("periodo") or "sin-periodo"
-    return f"factura_{sumi}_{per.replace('/', '-')}.pdf"
+    sumi = socio.get("suministro") or "sin-suministro"
+    per = (fac.get("periodo") or "sin-periodo").replace("/", "-")
+    return f"CoopAgua-Factura-{sumi}-{per}.pdf"
 
 
 def main():
