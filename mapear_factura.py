@@ -282,40 +282,56 @@ def _consumos_grafico(historial: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+def _paso_eje_nice(raw: float) -> int:
+    """Paso redondo para marcas del eje Y (1, 2, 5 × 10^n)."""
+    if raw <= 0:
+        return 5
+    exp = 10 ** math.floor(math.log10(raw))
+    f = raw / exp
+    if f <= 1:
+        nice = 1
+    elif f <= 2:
+        nice = 2
+    elif f <= 5:
+        nice = 5
+    else:
+        nice = 10
+    return max(int(nice * exp), 1)
+
+
 def escala_grafico_consumo(valores: list[float]) -> dict[str, Any]:
     """
     Techo del eje Y y marcas según el máximo del histórico (como boleta Fox).
-    Ej.: max ~15 → 0–15 paso 5; max ~102 → 0–120 paso 30.
+    Máximo ~5 marcas en el eje para que no se superpongan en PDF.
+    Ej.: max ~9 → 0–15 paso 5; max ~1335 → 0–1500 paso 500.
     """
+    default = {"y_max": 15.0, "ticks": [0, 5, 10, 15]}
+    max_marcas = 5
+
     if not valores:
-        return {"y_max": 15.0, "ticks": [0, 5, 10, 15]}
+        return default
 
     max_v = max(max(0.0, float(v)) for v in valores)
     if max_v <= 0:
-        return {"y_max": 15.0, "ticks": [0, 5, 10, 15]}
+        return default
 
     objetivo = max_v * 1.08
+    paso = _paso_eje_nice(objetivo / (max_marcas - 1))
+    y_max = int(math.ceil(objetivo / paso) * paso)
 
-    if objetivo <= 20:
+    if objetivo <= 20 and y_max < 15:
         paso = 5
-        y_max = int(math.ceil(objetivo / paso) * paso)
-        if y_max < 15:
-            y_max = 15
-    elif objetivo <= 55:
-        paso = 10
-        y_max = int(math.ceil(objetivo / paso) * paso)
-    elif objetivo <= 130:
-        paso = 30
-        y_max = int(math.ceil(objetivo / paso) * paso)
-    else:
-        paso = 50
-        y_max = int(math.ceil(objetivo / paso) * paso)
-        if y_max > 150:
-            y_max = int(math.ceil(objetivo / 50) * 50)
+        y_max = 15
 
     ticks = list(range(0, y_max + 1, paso))
-    if not ticks or ticks[-1] != y_max:
+    while len(ticks) > max_marcas + 1:
+        paso = _paso_eje_nice(paso * 1.6)
+        y_max = int(math.ceil(objetivo / paso) * paso)
+        ticks = list(range(0, y_max + 1, paso))
+
+    if ticks and ticks[-1] != y_max:
         ticks.append(y_max)
+
     return {"y_max": float(y_max), "ticks": ticks}
 
 

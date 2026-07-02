@@ -31,6 +31,20 @@ html, body {
 }
 .hoja:last-child { page-break-after: auto; }
 
+/* Página 1: talones al borde inferior (espacio flexible en el cuerpo) */
+.hoja-factura {
+    display: flex;
+    flex-direction: column;
+}
+.hoja1-cuerpo {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.hoja-factura > .talones {
+    flex: 0 0 auto;
+    margin-top: auto;
+}
+
 /* ── Encabezado ─────────────────────────────────────────── */
 .encabezado {
     display: grid;
@@ -240,7 +254,6 @@ html, body {
 .legales p { margin: 0; }
 .legales .destacado { font-weight: bold; }
 .legales .qr-bloque {
-    margin-top: -1em;
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
@@ -248,8 +261,8 @@ html, body {
     gap: 2mm;
 }
 .legales .qr-bloque .qr-img {
-    width: 23mm;
-    height: 22mm;
+    width: 24mm;
+    height: 24mm;
     display: block;
 }
 .legales .qr-texto {
@@ -373,7 +386,7 @@ html, body {
     position: absolute;
     left: 0;
     top: 0;
-    bottom: -170px;
+    bottom: -150px;
     width: 4mm;
     font-size: 6.5pt;
     font-weight: bold;
